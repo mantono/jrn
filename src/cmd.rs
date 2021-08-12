@@ -1,5 +1,3 @@
-use std::convert::{Infallible, TryFrom, TryInto};
-
 use chrono::{Date, NaiveDate, ParseError, Utc};
 use clap::Clap;
 
@@ -21,6 +19,14 @@ pub enum Command {
     Search {
         #[clap()]
         terms: Vec<String>,
+    },
+
+    /// Show history
+    ///
+    /// Show last journal entries
+    History {
+        #[clap(default_value = "5")]
+        entries: usize,
     },
 }
 
