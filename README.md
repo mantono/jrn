@@ -1,5 +1,5 @@
 # jrn
-_jrn_ (short for journal) is a command line application for journal writing and not keeping, with
+_jrn_ (short for journal) is a command line application for journal writing and note keeping, with
 emphasize being on simplicity. The barrier to creating new notes should always be as low as
 possible; simply write `jrn` in a terminal, and start writing in your favourite editor.
 
