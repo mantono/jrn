@@ -24,7 +24,7 @@ pub enum Command {
     /// Show history
     ///
     /// Show last journal entries
-    History {
+    Log {
         #[clap(default_value = "5")]
         entries: usize,
     },
