@@ -3,28 +3,28 @@ use std::path::PathBuf;
 use crate::cmd::Command;
 
 use chrono::{Date, Utc};
-use clap::Clap;
+use structopt::StructOpt;
 
-#[derive(Clap, Debug)]
-#[clap(name = "jrn", author, about)]
+#[derive(StructOpt, Debug)]
+#[structopt(name = "jrn", author, about)]
 pub struct Config {
     /// Print debug information
     ///
     /// Print debug information about current build for binary, useful for when an issue is
     /// encountered and reported
-    #[clap(short = 'D', long)]
+    #[structopt(short = "D", long)]
     debug: bool,
 
     /// Namespace
     ///
     /// Namespace to use. For exmaple "work", "private" or similar.
-    #[clap(short, long, default_value = "default")]
+    #[structopt(short, long, default_value = "default")]
     namespace: String,
 
     /// Command
     ///
     /// Command to execute
-    #[clap(subcommand)]
+    #[structopt(subcommand)]
     cmd: Option<Command>,
 }
 

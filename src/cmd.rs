@@ -1,7 +1,7 @@
 use chrono::{Date, NaiveDate, ParseError, Utc};
-use clap::Clap;
+use structopt::StructOpt;
 
-#[derive(Clap, Debug, Clone)]
+#[derive(StructOpt, Debug, Clone)]
 pub enum Command {
     /// Edit journal
     ///
@@ -11,13 +11,13 @@ pub enum Command {
         ///
         /// Date to edit. If no date is given, the journal entry that is opened will be for the
         /// current date.
-        #[clap(parse(try_from_str = parse_date))]
+        #[structopt(parse(try_from_str = parse_date))]
         date: Option<chrono::Date<Utc>>,
     },
 
     /// Search journal entries
     Search {
-        #[clap()]
+        #[structopt()]
         terms: Vec<String>,
     },
 
@@ -25,7 +25,7 @@ pub enum Command {
     ///
     /// Show last journal entries
     Log {
-        #[clap(default_value = "5")]
+        #[structopt(default_value = "5")]
         entries: usize,
     },
 }

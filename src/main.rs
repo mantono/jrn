@@ -1,16 +1,9 @@
-use std::{
-    convert::TryFrom,
-    ffi::OsString,
-    fmt::{format, Display},
-    fs::DirEntry,
-    path::PathBuf,
-    process,
-};
+use std::{convert::TryFrom, fmt::Display, path::PathBuf, process};
 
 use cfg::Config;
 use chrono::{Date, Utc};
-use clap::Clap;
 use dialoguer::Editor;
+use structopt::StructOpt;
 use walkdir::WalkDir;
 
 use crate::debug::dbg_info;
@@ -21,7 +14,7 @@ mod debug;
 mod entry;
 
 fn main() {
-    let cfg: Config = Config::parse();
+    let cfg: Config = Config::from_args();
 
     if cfg.debug() {
         println!("{}", dbg_info());
