@@ -2,8 +2,10 @@ use std::{convert::TryFrom, fmt::Display, path::PathBuf, process};
 
 use cfg::Config;
 use chrono::{Date, Utc};
+use crossterm::style::Stylize;
 use dialoguer::Editor;
 use structopt::StructOpt;
+use termimad::MadSkin;
 use walkdir::WalkDir;
 
 use crate::debug::dbg_info;
@@ -65,21 +67,30 @@ fn log(cfg: &Config, entries: usize) -> std::io::Result<()> {
         .filter(|p| p.file_type().is_file())
         .collect();
 
+    let mut skin = MadSkin::default();
+    skin.strikeout.add_attr(crossterm::style::Attribute::CrossedOut);
+    skin.strikeout.set_fg(crossterm::style::Color::Grey);
+    skin.set_headers_fg(crossterm::style::Color::Cyan);
+
     files
         .into_iter()
         .rev()
         .take(entries)
-        .filter_map(entry_to_string)
-        .for_each(|line| println!("{}", line));
+        .for_each(|entry| print_entry(entry, &skin));
 
     Ok(())
 }
 
-fn entry_to_string(entry: walkdir::DirEntry) -> Option<String> {
-    let name: String = entry.file_name().to_os_string().into_string().ok()?;
-    std::fs::read_to_string(entry.path())
-        .ok()
-        .map(|content| format!("---{}---\n{}\n", name, content))
+fn print_entry(entry: walkdir::DirEntry, skin: &MadSkin) {
+    let name: String = match entry.file_name().to_os_string().into_string() {
+        Ok(name) => name,
+        Err(_) => return,
+    };
+
+    std::fs::read_to_string(entry.path()).ok().map(|content| {
+        println!("\n{} {} {}", "┈┈".dark_grey(), name.yellow(), "┈┈┈┈┈".dark_grey());
+        skin.print_text(&content);
+    });
 }
 
 fn search(cfg: &Config, terms: Vec<String>) -> std::io::Result<()> {
