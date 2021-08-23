@@ -25,14 +25,14 @@ fn main() {
 
     match cfg.command() {
         cmd::Command::Edit { date } => edit(&cfg, date).unwrap(),
-        cmd::Command::Search { terms } => search(&cfg, terms).unwrap(),
-        cmd::Command::Log { entries } => log(&cfg, entries).unwrap(),
+        cmd::Command::Search { terms, limit } => search(&cfg, terms, limit).unwrap(),
+        cmd::Command::Log { limit } => log(&cfg, limit).unwrap(),
         #[cfg(feature = "git2")]
         cmd::Command::Sync => panic!("Feature git2 has not been implemented yet"),
     };
 }
 
-fn edit(cfg: &Config, date: Option<Date<Utc>>) -> Result<(), std::io::Error> {
+fn edit(cfg: &Config, date: Option<Date<Utc>>) -> Result<usize, std::io::Error> {
     let file: PathBuf = cfg.file(date);
 
     let content = match std::fs::read_to_string(&file) {
@@ -42,12 +42,14 @@ fn edit(cfg: &Config, date: Option<Date<Utc>>) -> Result<(), std::io::Error> {
 
     let edit: Option<String> = Editor::new().extension(".md").trim_newlines(true).edit(&content)?;
 
-    if let Some(content) = edit {
-        create_parent(&file)?;
-        std::fs::write(&file, content)?
+    match edit {
+        Some(_) => {
+            create_parent(&file)?;
+            std::fs::write(&file, content)?;
+            Ok(1)
+        }
+        None => Ok(0),
     }
-
-    Ok(())
 }
 
 fn create_parent(path: &PathBuf) -> std::io::Result<()> {
@@ -59,44 +61,24 @@ fn create_parent(path: &PathBuf) -> std::io::Result<()> {
     }
 }
 
-fn log(cfg: &Config, entries: usize) -> std::io::Result<()> {
-    let files: Vec<walkdir::DirEntry> = WalkDir::new(cfg.dir())
+fn log(cfg: &Config, limit: usize) -> std::io::Result<usize> {
+    let entries: Vec<Entry> = WalkDir::new(cfg.dir())
         .follow_links(false)
         .max_depth(1)
         .sort_by_file_name()
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|p| p.file_type().is_file())
+        .filter_map(|f| Entry::try_from(f).ok())
         .collect();
 
-    let mut skin = MadSkin::default();
-    skin.strikeout.add_attr(crossterm::style::Attribute::CrossedOut);
-    skin.strikeout.set_fg(crossterm::style::Color::Grey);
-    skin.set_headers_fg(crossterm::style::Color::Cyan);
+    let entries: Vec<Entry> = entries.into_iter().rev().take(limit).collect();
 
-    files
-        .into_iter()
-        .rev()
-        .take(entries)
-        .for_each(|entry| print_entry(entry, &skin));
-
-    Ok(())
+    Ok(print_entries(entries))
 }
 
-fn print_entry(entry: walkdir::DirEntry, skin: &MadSkin) {
-    let name: String = match entry.file_name().to_os_string().into_string() {
-        Ok(name) => name,
-        Err(_) => return,
-    };
-
-    std::fs::read_to_string(entry.path()).ok().map(|content| {
-        println!("\n{} {} {}", "┈┈".dark_grey(), name.yellow(), "┈┈┈┈┈".dark_grey());
-        skin.print_text(&content);
-    });
-}
-
-fn search(cfg: &Config, terms: Vec<String>) -> std::io::Result<()> {
-    WalkDir::new(cfg.dir())
+fn search(cfg: &Config, terms: Vec<String>, limit: usize) -> std::io::Result<usize> {
+    let entries: Vec<Entry> = WalkDir::new(cfg.dir())
         .follow_links(false)
         .max_depth(1)
         .sort_by_file_name()
@@ -104,9 +86,30 @@ fn search(cfg: &Config, terms: Vec<String>) -> std::io::Result<()> {
         .filter_map(|d| d.ok())
         .filter_map(|f| Entry::try_from(f).ok())
         .filter(|e: &Entry| e.contains_any(&terms))
-        .for_each(|e| println!("{}", e));
+        .take(limit)
+        .collect();
 
-    Ok(())
+    Ok(print_entries(entries))
+}
+
+fn print_entries(entries: Vec<Entry>) -> usize {
+    let mut skin = MadSkin::default();
+    skin.strikeout.add_attr(crossterm::style::Attribute::CrossedOut);
+    skin.strikeout.set_fg(crossterm::style::Color::Grey);
+    skin.set_headers_fg(crossterm::style::Color::Cyan);
+
+    let length: usize = entries.len();
+    for e in entries {
+        print_entry(e, &skin)
+    }
+
+    length
+}
+
+fn print_entry(entry: Entry, skin: &MadSkin) {
+    let name: String = entry.name;
+    println!("\n{} {} {}", "┈┈".dark_grey(), name.yellow(), "┈┈┈┈┈".dark_grey());
+    skin.print_text(&entry.content);
 }
 
 struct Entry {

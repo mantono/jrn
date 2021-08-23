@@ -21,14 +21,16 @@ pub enum Command {
     Search {
         #[structopt()]
         terms: Vec<String>,
+        #[structopt(short, long, default_value = "10")]
+        limit: usize,
     },
 
     /// Show history
     ///
     /// Show last journal entries
     Log {
-        #[structopt(default_value = "5")]
-        entries: usize,
+        #[structopt(short, long, default_value = "5")]
+        limit: usize,
     },
 
     /// Sync data
