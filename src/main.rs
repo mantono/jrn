@@ -27,6 +27,8 @@ fn main() {
         cmd::Command::Edit { date } => edit(&cfg, date).unwrap(),
         cmd::Command::Search { terms } => search(&cfg, terms).unwrap(),
         cmd::Command::Log { entries } => log(&cfg, entries).unwrap(),
+        #[cfg(feature = "git2")]
+        cmd::Command::Sync => panic!("Feature git2 has not been implemented yet"),
     };
 }
 
