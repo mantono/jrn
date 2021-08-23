@@ -19,3 +19,6 @@ git2 = { version = "0.13", optional = true }
 
 [build-dependencies]
 built = { version = "0.4", features = ["git2"] }
+
+[features]
+default = ["git2"]
