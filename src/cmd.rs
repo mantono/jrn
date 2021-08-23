@@ -15,6 +15,8 @@ pub enum Command {
         date: Option<chrono::Date<Utc>>,
     },
 
+    /// Search entries
+    ///
     /// Search journal entries
     Search {
         #[structopt()]
@@ -28,6 +30,12 @@ pub enum Command {
         #[structopt(default_value = "5")]
         entries: usize,
     },
+
+    /// Sync data
+    ///
+    /// Sync entries recorded with Git repository
+    #[cfg(feature = "git2")]
+    Sync,
 }
 
 impl Default for Command {
