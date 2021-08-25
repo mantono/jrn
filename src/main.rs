@@ -30,6 +30,7 @@ fn main() {
     };
 }
 
+/// Return the number of bytes that were written.
 fn edit(cfg: &Config, date: Option<Date<Utc>>) -> Result<usize, std::io::Error> {
     let file: PathBuf = cfg.file(date);
 
@@ -41,8 +42,9 @@ fn edit(cfg: &Config, date: Option<Date<Utc>>) -> Result<usize, std::io::Error> 
     match edit {
         Some(content) => {
             create_parent(&file)?;
+            let bytes: usize = content.bytes().len();
             std::fs::write(&file, content)?;
-            Ok(1)
+            Ok(bytes)
         }
         None => Ok(0),
     }
@@ -57,6 +59,7 @@ fn create_parent(path: &PathBuf) -> std::io::Result<()> {
     }
 }
 
+/// Returns the number of entries printed, if successful, else a std::io::Error
 fn log(cfg: &Config, limit: usize) -> std::io::Result<usize> {
     let entries: Vec<Entry> = WalkDir::new(cfg.dir())
         .follow_links(false)
@@ -73,6 +76,7 @@ fn log(cfg: &Config, limit: usize) -> std::io::Result<usize> {
     Ok(print_entries(entries))
 }
 
+/// Returns the number of entries found and printed, if successful, else a std::io::Error
 fn search(cfg: &Config, terms: Vec<String>, limit: usize) -> std::io::Result<usize> {
     let entries: Vec<Entry> = WalkDir::new(cfg.dir())
         .follow_links(false)
