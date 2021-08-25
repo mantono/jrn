@@ -45,11 +45,8 @@ impl Config {
             dirs_next::home_dir(),
         ];
 
-        let mut root: PathBuf = options
-            .into_iter()
-            .filter_map(|d| d)
-            .next()
-            .expect("Unable to find a data directory");
+        let mut root: PathBuf =
+            options.into_iter().flatten().next().expect("Unable to find a data directory");
 
         root.push("jrn");
         root
@@ -65,7 +62,7 @@ impl Config {
     }
 
     pub fn file(&self, date: Option<Date<Utc>>) -> PathBuf {
-        let date: Date<Utc> = date.unwrap_or_else(|| Utc::today());
+        let date: Date<Utc> = date.unwrap_or_else(Utc::today);
         let mut dir: PathBuf = self.dir();
         dir.push(format!("{}.md", date.format("%Y-%m-%d")));
         dir

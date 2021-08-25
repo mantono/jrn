@@ -1,4 +1,8 @@
-use std::{convert::TryFrom, path::PathBuf, process};
+use std::{
+    convert::TryFrom,
+    path::{Path, PathBuf},
+    process,
+};
 
 use cfg::Config;
 use chrono::{Date, Utc};
@@ -51,8 +55,8 @@ fn edit(cfg: &Config, date: Option<Date<Utc>>) -> Result<usize, std::io::Error> 
     }
 }
 
-fn create_parent(path: &PathBuf) -> std::io::Result<()> {
-    let mut parent = path.clone();
+fn create_parent(path: &Path) -> std::io::Result<()> {
+    let mut parent = path.to_path_buf();
     parent.pop();
     match parent.exists() {
         true => Ok(()),
@@ -110,5 +114,5 @@ fn print_entries(entries: Vec<Entry>) -> usize {
 fn print_entry(entry: Entry, skin: &MadSkin) {
     let name: &str = entry.name();
     println!("\n{} {} {}", "┈┈".dark_grey(), name.yellow(), "┈┈┈┈┈".dark_grey());
-    skin.print_text(&entry.content());
+    skin.print_text(entry.content());
 }
