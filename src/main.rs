@@ -33,15 +33,13 @@ fn main() {
 fn edit(cfg: &Config, date: Option<Date<Utc>>) -> Result<usize, std::io::Error> {
     let file: PathBuf = cfg.file(date);
 
-    let content = match std::fs::read_to_string(&file) {
-        Ok(content) => content,
-        Err(_) => String::from(""),
-    };
+    let content: String =
+        if file.exists() { std::fs::read_to_string(&file)? } else { String::from("") };
 
     let edit: Option<String> = Editor::new().extension(".md").trim_newlines(true).edit(&content)?;
 
     match edit {
-        Some(_) => {
+        Some(content) => {
             create_parent(&file)?;
             std::fs::write(&file, content)?;
             Ok(1)
