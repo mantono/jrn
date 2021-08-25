@@ -1,34 +1,63 @@
-use std::str::FromStr;
-
-use chrono::Utc;
+use std::{convert::TryFrom, fmt::Display};
 
 #[derive(Debug)]
-struct Entry {
-    date: chrono::Date<Utc>,
+pub struct Entry {
+    name: String,
     content: String,
 }
 
 impl Entry {
-    pub fn new() -> Self {
-        Entry {
-            date: Utc::today(),
-            content: String::from(""),
-        }
+    pub fn name(&self) -> &str {
+        &self.name
     }
 
-    pub fn from(date: chrono::Date<Utc>, content: String) -> Self {
-        Entry { date, content }
+    pub fn content(&self) -> &str {
+        &self.content
+    }
+
+    pub fn contains(&self, term: &str) -> bool {
+        self.content.to_lowercase().contains(&term.to_lowercase())
+    }
+
+    pub fn contains_any(&self, terms: &Vec<String>) -> bool {
+        terms.iter().any(|term| self.contains(&term))
     }
 }
 
-impl FromStr for Entry {
-    type Err = ();
+impl Display for Entry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("---{}---\n{}\n", self.name, self.content))
+    }
+}
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let entry = Entry {
-            date: Utc::today(),
-            content: s.to_string(),
+impl TryFrom<walkdir::DirEntry> for Entry {
+    type Error = EntryError;
+
+    fn try_from(value: walkdir::DirEntry) -> Result<Self, Self::Error> {
+        let f = value.file_type();
+        if f.is_dir() {
+            return Err(EntryError::IsDir);
+        } else if f.is_symlink() {
+            return Err(EntryError::IsSymlink);
+        }
+
+        let name: String = match value.file_name().to_os_string().into_string() {
+            Ok(name) => name,
+            Err(_) => {
+                return Err(EntryError::Other(String::from("Unable to convert name of file")))
+            }
         };
+        let content: String = match std::fs::read_to_string(value.path()) {
+            Ok(content) => content,
+            Err(e) => return Err(EntryError::Other(e.to_string())),
+        };
+        let entry = Entry { name, content };
         Ok(entry)
     }
+}
+
+pub enum EntryError {
+    IsDir,
+    IsSymlink,
+    Other(String),
 }

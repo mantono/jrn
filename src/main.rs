@@ -1,9 +1,10 @@
-use std::{convert::TryFrom, fmt::Display, path::PathBuf, process};
+use std::{convert::TryFrom, path::PathBuf, process};
 
 use cfg::Config;
 use chrono::{Date, Utc};
 use crossterm::style::Stylize;
 use dialoguer::Editor;
+use entry::Entry;
 use structopt::StructOpt;
 use termimad::MadSkin;
 use walkdir::WalkDir;
@@ -107,60 +108,7 @@ fn print_entries(entries: Vec<Entry>) -> usize {
 }
 
 fn print_entry(entry: Entry, skin: &MadSkin) {
-    let name: String = entry.name;
+    let name: &str = entry.name();
     println!("\n{} {} {}", "┈┈".dark_grey(), name.yellow(), "┈┈┈┈┈".dark_grey());
-    skin.print_text(&entry.content);
-}
-
-struct Entry {
-    pub name: String,
-    pub content: String,
-}
-
-impl Entry {
-    pub fn contains(&self, term: &str) -> bool {
-        self.content.to_lowercase().contains(&term.to_lowercase())
-    }
-
-    pub fn contains_any(&self, terms: &Vec<String>) -> bool {
-        terms.iter().any(|term| self.contains(&term))
-    }
-}
-
-impl Display for Entry {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("---{}---\n{}\n", self.name, self.content))
-    }
-}
-
-impl TryFrom<walkdir::DirEntry> for Entry {
-    type Error = EntryError;
-
-    fn try_from(value: walkdir::DirEntry) -> Result<Self, Self::Error> {
-        let f = value.file_type();
-        if f.is_dir() {
-            return Err(EntryError::IsDir);
-        } else if f.is_symlink() {
-            return Err(EntryError::IsSymlink);
-        }
-
-        let name: String = match value.file_name().to_os_string().into_string() {
-            Ok(name) => name,
-            Err(_) => {
-                return Err(EntryError::Other(String::from("Unable to convert name of file")))
-            }
-        };
-        let content: String = match std::fs::read_to_string(value.path()) {
-            Ok(content) => content,
-            Err(e) => return Err(EntryError::Other(e.to_string())),
-        };
-        let entry = Entry { name, content };
-        Ok(entry)
-    }
-}
-
-enum EntryError {
-    IsDir,
-    IsSymlink,
-    Other(String),
+    skin.print_text(&entry.content());
 }
