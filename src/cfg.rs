@@ -67,4 +67,8 @@ impl Config {
         dir.push(format!("{}.md", date.format("%Y-%m-%d")));
         dir
     }
+
+    pub fn git_dir(&self) -> PathBuf {
+        self.data_dir()
+    }
 }
