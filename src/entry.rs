@@ -19,8 +19,8 @@ impl Entry {
         self.content.to_lowercase().contains(&term.to_lowercase())
     }
 
-    pub fn contains_any(&self, terms: &Vec<String>) -> bool {
-        terms.iter().any(|term| self.contains(&term))
+    pub fn contains_any(&self, terms: &[String]) -> bool {
+        terms.iter().any(|term| self.contains(term))
     }
 }
 
