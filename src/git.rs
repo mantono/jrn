@@ -25,7 +25,6 @@ pub fn sync(cfg: &Config) -> Result<usize, git2::Error> {
         .unwrap()
         .iter()
         .filter(|f| filter_status(&f.status()))
-        .inspect(|f| println!("{:?}: {:?}", f.path(), f.status()))
         // Add any changes to index if present
         .map(|f| try_add(&mut index, f))
         .filter_map(|f| f.ok())
