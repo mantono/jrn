@@ -66,7 +66,11 @@ fn filter_status(status: &Status) -> bool {
 /// Add a created or modified file to the index
 fn try_add<'a>(index: &mut Index, file: StatusEntry<'a>) -> Result<StatusEntry<'a>, git2::Error> {
     let path: PathBuf = PathBuf::from(file.path().unwrap());
-    index.add_path(&path)?;
+    if file.status().is_wt_deleted() {
+        index.remove_path(&path)?;
+    } else {
+        index.add_path(&path)?;
+    }
     index.write_tree()?;
     Ok(file)
 }
