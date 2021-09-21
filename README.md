@@ -20,4 +20,5 @@ SUBCOMMANDS:
     help      Prints this message or the help of the given subcommand(s)
     log       Show history
     search    Search journal entries
+    sync      Sync entries
 ```

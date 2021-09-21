@@ -19,6 +19,8 @@ mod cfg;
 mod cmd;
 mod debug;
 mod entry;
+#[cfg(feature = "git2")]
+mod git;
 
 fn main() {
     let cfg: Config = Config::from_args();
@@ -29,9 +31,19 @@ fn main() {
     }
 
     match cfg.command() {
-        cmd::Command::Edit { date } => edit(&cfg, date).unwrap(),
-        cmd::Command::Search { terms, limit } => search(&cfg, terms, limit).unwrap(),
-        cmd::Command::Log { limit } => log(&cfg, limit).unwrap(),
+        cmd::Command::Edit { date } => {
+            edit(&cfg, date).unwrap();
+        }
+        cmd::Command::Search { terms, limit } => {
+            search(&cfg, terms, limit).unwrap();
+        }
+        cmd::Command::Log { limit } => {
+            log(&cfg, limit).unwrap();
+        }
+        #[cfg(feature = "git2")]
+        cmd::Command::Sync => {
+            git::sync(&cfg).unwrap();
+        }
     };
 }
 
