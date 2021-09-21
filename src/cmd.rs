@@ -33,9 +33,12 @@ pub enum Command {
         limit: usize,
     },
 
-    /// Sync data
+    /// Sync entries
     ///
-    /// Sync entries recorded with Git repository
+    /// Synchronize entries recorded with a Git repository, this will
+    /// automatically commit, pull, merge and push any changes, as long
+    /// as there isn't any merge conflict. In case of merge conflicts, these
+    /// will have to be resolved manually.
     #[cfg(feature = "git2")]
     Sync,
 }
