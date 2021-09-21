@@ -7,55 +7,54 @@ use git2::{
 };
 
 pub fn sync(cfg: &Config) -> Result<usize, git2::Error> {
-    // Read or init repo if none is present
-    let repo: Repository = match Repository::open(cfg.dir()) {
-        Ok(repo) => repo,
-        Err(_) => Repository::init(cfg.git_dir())?,
-    };
+    let repo: Repository = repo(&cfg)?;
     println!("Using repository {:?}", repo.path());
 
-    // Check for changes in tree (unstaged changes)
+    let mut index: Index = repo.index()?;
+    let changes: usize = add_changes(&repo, &mut index)?;
+
+    if changes > 0 {
+        let commit: Oid = commit(&repo, &mut index)?;
+        println!("Created commit {}", commit);
+    }
+
+    pull(&repo, "origin", "master")?
+        .map(|remote| push(remote, "master"))
+        .transpose()?;
+
+    Ok(changes)
+}
+
+/// Create a handle to the existing git repository, or initailize a new repository if none is
+/// present
+fn repo(cfg: &Config) -> Result<Repository, git2::Error> {
+    match Repository::open(cfg.dir()) {
+        Ok(repo) => Ok(repo),
+        Err(_) => Repository::init(cfg.git_dir()),
+    }
+}
+
+/// Check for changes in tree (unstaged changes), and add them to the index
+fn add_changes(repo: &Repository, mut index: &mut Index) -> Result<usize, git2::Error> {
     let mut options = StatusOptions::new();
     options.include_untracked(true).recurse_untracked_dirs(true);
-
-    let mut index: Index = repo.index()?;
 
     let changes: usize = repo
         .statuses(Some(&mut options))
         .unwrap()
         .iter()
         .filter(|f| filter_status(&f.status()))
-        // Add any changes to index if present
         .map(|f| try_add(&mut index, f))
         .filter_map(|f| f.ok())
         .count();
 
-    if changes > 0 {
-        let oid: Oid = index.write_tree()?;
-        let sign = repo.signature()?;
-        let message = format!("Add/update {} files", changes);
-
-        let tree: Tree = repo.find_tree(oid)?;
-        index.add_all(&["."], git2::IndexAddOption::DEFAULT, None)?;
-        index.write()?;
-
-        let parent_commit: Commit = repo.head()?.peel_to_commit()?;
-
-        // Commit changes
-        let commit: Oid =
-            repo.commit(Some("HEAD"), &sign, &sign, &message, &tree, &[&parent_commit])?;
-        println!("Created commit {}", commit);
-    }
-
-    // Pull from remote (if remote exists)
-    pull(&repo)?
-        // 4. Push to remote (if remote exists)
-        .map(|remote| push(remote))
-        .transpose()?;
-
     Ok(changes)
 }
 
+/// Filter out files with relevant status, i.e. files that are **not**
+/// - unchanged
+/// - ignored
+/// - has an unresolved conflict
 fn filter_status(status: &Status) -> bool {
     if status.is_conflicted() {
         panic!("File has a conflict that needs to be resolved manually")
@@ -64,6 +63,7 @@ fn filter_status(status: &Status) -> bool {
     status.intersects(include)
 }
 
+/// Add a created or modified file to the index
 fn try_add<'a>(index: &mut Index, file: StatusEntry<'a>) -> Result<StatusEntry<'a>, git2::Error> {
     let path: PathBuf = PathBuf::from(file.path().unwrap());
     index.add_path(&path)?;
@@ -71,12 +71,30 @@ fn try_add<'a>(index: &mut Index, file: StatusEntry<'a>) -> Result<StatusEntry<'
     Ok(file)
 }
 
-fn pull(repo: &Repository) -> Result<Option<Remote>, git2::Error> {
-    let mut remote: Remote = match repo.find_remote("origin") {
+/// Commit changes that has been added to index
+fn commit(repo: &Repository, index: &mut Index) -> Result<Oid, git2::Error> {
+    let sign = repo.signature()?;
+    let message = format!("Added/updated files");
+    let oid: Oid = index.write_tree()?;
+    let tree: Tree = repo.find_tree(oid)?;
+
+    index.add_all(&["."], git2::IndexAddOption::DEFAULT, None)?;
+    index.write()?;
+
+    let parent_commit: Commit = repo.head()?.peel_to_commit()?;
+    repo.commit(Some("HEAD"), &sign, &sign, &message, &tree, &[&parent_commit])
+}
+
+/// Pull branch from remote
+fn pull<'a>(
+    repo: &'a Repository,
+    remote: &str,
+    branch: &str,
+) -> Result<Option<Remote<'a>>, git2::Error> {
+    let mut remote: Remote<'a> = match repo.find_remote(remote) {
         Ok(remote) => remote,
         Err(_) => return Ok(None),
     };
-    let branch: &str = "master";
     let mut options = FetchOptions::new();
     options.remote_callbacks(callback());
     remote.fetch(&[branch], Some(&mut options), None)?;
@@ -84,8 +102,8 @@ fn pull(repo: &Repository) -> Result<Option<Remote>, git2::Error> {
     Ok(Some(remote))
 }
 
-fn push(mut remote: Remote) -> Result<(), git2::Error> {
-    let branch: &str = "master";
+/// Push commits to remote at the given branch
+fn push(mut remote: Remote, branch: &str) -> Result<(), git2::Error> {
     let refspc = format!("refs/heads/{0}:refs/heads/{0}", branch);
     let refs: [&str; 1] = [&refspc];
     let mut options = PushOptions::new();
@@ -95,6 +113,7 @@ fn push(mut remote: Remote) -> Result<(), git2::Error> {
     Ok(())
 }
 
+/// Callback to handle SSH authentication
 fn callback() -> RemoteCallbacks<'static> {
     let mut cb = RemoteCallbacks::new();
     cb.credentials(|_url, username, _allowed_types| {
