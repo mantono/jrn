@@ -7,7 +7,7 @@ use git2::{
 };
 
 pub fn sync(cfg: &Config) -> Result<usize, git2::Error> {
-    let repo: Repository = repo(&cfg)?;
+    let repo: Repository = repo(cfg)?;
     println!("Using repository {:?}", repo.path());
 
     let mut index: Index = repo.index()?;
@@ -78,7 +78,7 @@ fn try_add<'a>(index: &mut Index, file: StatusEntry<'a>) -> Result<StatusEntry<'
 /// Commit changes that has been added to index
 fn commit(repo: &Repository, index: &mut Index) -> Result<Oid, git2::Error> {
     let sign = repo.signature()?;
-    let message = format!("Added/updated files");
+    let message = "Added/updated files";
     let oid: Oid = index.write_tree()?;
     let tree: Tree = repo.find_tree(oid)?;
 
@@ -86,7 +86,7 @@ fn commit(repo: &Repository, index: &mut Index) -> Result<Oid, git2::Error> {
     index.write()?;
 
     let parent_commit: Commit = repo.head()?.peel_to_commit()?;
-    repo.commit(Some("HEAD"), &sign, &sign, &message, &tree, &[&parent_commit])
+    repo.commit(Some("HEAD"), &sign, &sign, message, &tree, &[&parent_commit])
 }
 
 /// Pull branch from remote
