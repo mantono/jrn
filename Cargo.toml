@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 chrono = "0.4"
 structopt = "0.3"
-dialoguer = "0.8.0"
+dialoguer = "0.10"
 #rusqlite = "0.25.3"
 walkdir = "2"
 dirs-next = "2.0"
