@@ -66,8 +66,4 @@ impl Config {
         dir.push(format!("{file_name}.md"));
         dir
     }
-
-    pub fn git_dir(&self) -> PathBuf {
-        self.data_dir()
-    }
 }
