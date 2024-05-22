@@ -2,7 +2,6 @@ use std::path::PathBuf;
 
 use crate::cmd::Command;
 
-use chrono::{Date, Utc};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -61,10 +60,10 @@ impl Config {
         dir
     }
 
-    pub fn file(&self, date: Option<Date<Utc>>) -> PathBuf {
-        let date: Date<Utc> = date.unwrap_or_else(Utc::today);
+    pub fn file(&self, file_name: Option<String>) -> PathBuf {
+        let file_name = file_name.unwrap_or_else(|| crate::cmd::gen_id());
         let mut dir: PathBuf = self.dir();
-        dir.push(format!("{}.md", date.format("%Y-%m-%d")));
+        dir.push(format!("{file_name}.md"));
         dir
     }
 
