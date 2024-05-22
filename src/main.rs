@@ -18,8 +18,6 @@ mod cfg;
 mod cmd;
 mod debug;
 mod entry;
-#[cfg(feature = "git2")]
-mod git;
 
 fn main() {
     let cfg: Config = Config::from_args();
@@ -38,10 +36,6 @@ fn main() {
         }
         cmd::Command::Log { limit } => {
             log(&cfg, limit).unwrap();
-        }
-        #[cfg(feature = "git2")]
-        cmd::Command::Sync => {
-            git::sync(&cfg).unwrap();
         }
     };
 }
