@@ -1,4 +1,3 @@
-use chrono::{Date, NaiveDate, ParseError, Utc};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug, Clone)]
@@ -7,12 +6,11 @@ pub enum Command {
     ///
     /// Edit or create a journal entry
     Edit {
-        /// Date to edit
+        /// Entry to edit
         ///
-        /// Date to edit. If no date is given, the journal entry that is opened will be for the
-        /// current date.
-        #[structopt(parse(try_from_str = parse_date))]
-        date: Option<chrono::Date<Utc>>,
+        /// Entry to edit. If no name is given, a new journal entry will be created
+        #[structopt()]
+        entry: Option<String>,
     },
 
     /// Search entries
@@ -46,20 +44,12 @@ pub enum Command {
 impl Default for Command {
     fn default() -> Self {
         Command::Edit {
-            date: Some(Utc::today()),
+            entry: Some(gen_id()),
         }
     }
 }
 
-fn parse_date(input: &str) -> Result<chrono::Date<Utc>, String> {
-    let date: Result<chrono::Date<Utc>, ParseError> =
-        NaiveDate::parse_from_str(input, "%Y-%m-%d").map(|date| Date::<Utc>::from_utc(date, Utc));
-
-    match date {
-        Ok(date) => match date.cmp(&Utc::today()) {
-            std::cmp::Ordering::Less | std::cmp::Ordering::Equal => Ok(date),
-            std::cmp::Ordering::Greater => Err(String::from("date is in the future")),
-        },
-        Err(e) => Err(e.to_string()),
-    }
+pub fn gen_id() -> String {
+    let mut gen = flakeid::gen::FlakeGen::with_mac_addr().expect("Unable to create generator");
+    gen.next().map(|id| format!("{id:x}")).expect("Failed to generate a flake id")
 }

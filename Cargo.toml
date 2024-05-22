@@ -7,15 +7,14 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4"
 structopt = "0.3"
 dialoguer = "0.10"
-#rusqlite = "0.25.3"
 walkdir = "2"
 dirs-next = "2.0"
 termimad = "0.14"
 crossterm = "0.20.0"
 git2 = { version = "0.13", optional = true }
+flakeid = { git = "https://github.com/mantono/flakeid", version = "0.1.0" }
 
 [build-dependencies]
 built = { version = "0.4", features = ["git2"] }

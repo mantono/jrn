@@ -5,7 +5,6 @@ use std::{
 };
 
 use cfg::Config;
-use chrono::{Date, Utc};
 use crossterm::style::Stylize;
 use dialoguer::Editor;
 use entry::Entry;
@@ -31,8 +30,8 @@ fn main() {
     }
 
     match cfg.command() {
-        cmd::Command::Edit { date } => {
-            edit(&cfg, date).unwrap();
+        cmd::Command::Edit { entry } => {
+            edit(&cfg, entry).unwrap();
         }
         cmd::Command::Search { terms, limit } => {
             search(&cfg, terms, limit).unwrap();
@@ -48,8 +47,8 @@ fn main() {
 }
 
 /// Return the number of bytes that were written.
-fn edit(cfg: &Config, date: Option<Date<Utc>>) -> Result<usize, std::io::Error> {
-    let file: PathBuf = cfg.file(date);
+fn edit(cfg: &Config, entry: Option<String>) -> Result<usize, std::io::Error> {
+    let file: PathBuf = cfg.file(entry);
 
     let content: String =
         if file.exists() { std::fs::read_to_string(&file)? } else { String::from("") };
