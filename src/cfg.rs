@@ -33,7 +33,7 @@ impl Config {
     }
 
     pub fn command(&self) -> Command {
-        self.cmd.clone().unwrap_or_else(|| Command::default())
+        self.cmd.clone().unwrap_or_default()
     }
 
     fn data_dir(&self) -> PathBuf {
@@ -61,13 +61,9 @@ impl Config {
     }
 
     pub fn file(&self, file_name: Option<String>) -> PathBuf {
-        let file_name = file_name.unwrap_or_else(|| crate::cmd::gen_id());
+        let file_name = file_name.unwrap_or_else(crate::cmd::gen_id);
         let mut dir: PathBuf = self.dir();
         dir.push(format!("{file_name}.md"));
         dir
-    }
-
-    pub fn git_dir(&self) -> PathBuf {
-        self.data_dir()
     }
 }
