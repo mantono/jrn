@@ -11,8 +11,8 @@ structopt = "0.3"
 dialoguer = "0.10"
 walkdir = "2"
 dirs-next = "2.0"
-termimad = "0.14"
-crossterm = "0.20.0"
+termimad = "0.31"
+crossterm = "0.28"
 flakeid = { git = "https://github.com/mantono/flakeid", version = "0.1.0" }
 
 [build-dependencies]
