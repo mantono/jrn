@@ -2,6 +2,7 @@ use std::{
     convert::TryFrom,
     path::{Path, PathBuf},
     process,
+    time::Duration,
 };
 
 use cfg::Config;
@@ -74,7 +75,7 @@ fn log(cfg: &Config, limit: usize) -> std::io::Result<usize> {
     let entries: Vec<Entry> = WalkDir::new(cfg.dir())
         .follow_links(false)
         .max_depth(1)
-        .sort_by_file_name()
+        .sort_by_key(get_sort_key)
         .into_iter()
         .filter_map(|e| e.ok())
         .filter(|p| p.file_type().is_file())
@@ -84,6 +85,16 @@ fn log(cfg: &Config, limit: usize) -> std::io::Result<usize> {
     let entries: Vec<Entry> = entries.into_iter().rev().take(limit).collect();
 
     Ok(print_entries(entries))
+}
+
+fn get_sort_key(entry: &walkdir::DirEntry) -> std::time::Duration {
+    match entry.metadata() {
+        Ok(metadata) => match metadata.created() {
+            Ok(ctime) => ctime.duration_since(std::time::UNIX_EPOCH).unwrap_or(Duration::MAX),
+            Err(_) => Duration::MAX,
+        },
+        Err(_) => Duration::MAX,
+    }
 }
 
 /// Returns the number of entries found and printed, if successful, else a std::io::Error
