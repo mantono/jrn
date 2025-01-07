@@ -87,22 +87,12 @@ fn log(cfg: &Config, limit: usize) -> std::io::Result<usize> {
     Ok(print_entries(entries))
 }
 
-fn get_sort_key(entry: &walkdir::DirEntry) -> std::time::Duration {
-    match entry.metadata() {
-        Ok(metadata) => match metadata.created() {
-            Ok(ctime) => ctime.duration_since(std::time::UNIX_EPOCH).unwrap_or(Duration::MAX),
-            Err(_) => Duration::MAX,
-        },
-        Err(_) => Duration::MAX,
-    }
-}
-
 /// Returns the number of entries found and printed, if successful, else a std::io::Error
 fn search(cfg: &Config, terms: Vec<String>, limit: usize) -> std::io::Result<usize> {
     let entries: Vec<Entry> = WalkDir::new(cfg.dir())
         .follow_links(false)
         .max_depth(1)
-        .sort_by_file_name()
+        .sort_by_key(get_sort_key)
         .into_iter()
         .filter_map(|d| d.ok())
         .filter_map(|f| Entry::try_from(f).ok())
@@ -111,6 +101,16 @@ fn search(cfg: &Config, terms: Vec<String>, limit: usize) -> std::io::Result<usi
         .collect();
 
     Ok(print_entries(entries))
+}
+
+fn get_sort_key(entry: &walkdir::DirEntry) -> std::time::Duration {
+    match entry.metadata() {
+        Ok(metadata) => match metadata.created() {
+            Ok(ctime) => ctime.duration_since(std::time::UNIX_EPOCH).unwrap_or(Duration::MAX),
+            Err(_) => Duration::MAX,
+        },
+        Err(_) => Duration::MAX,
+    }
 }
 
 fn print_entries(entries: Vec<Entry>) -> usize {
