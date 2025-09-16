@@ -115,9 +115,9 @@ fn get_sort_key(entry: &walkdir::DirEntry) -> std::time::Duration {
 
 fn print_entries(entries: Vec<Entry>) -> usize {
     let mut skin = MadSkin::default();
-    skin.strikeout.add_attr(crossterm::style::Attribute::CrossedOut);
-    skin.strikeout.set_fg(crossterm::style::Color::Grey);
-    skin.set_headers_fg(crossterm::style::Color::Cyan);
+    skin.strikeout.add_attr(termimad::crossterm::style::Attribute::CrossedOut);
+    skin.strikeout.set_fg(termimad::crossterm::style::Color::Grey);
+    skin.set_headers_fg(termimad::crossterm::style::Color::Cyan);
 
     let length: usize = entries.len();
     for e in entries {
